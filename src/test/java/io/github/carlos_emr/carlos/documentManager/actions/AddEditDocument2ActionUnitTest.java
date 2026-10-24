@@ -197,15 +197,21 @@ class AddEditDocument2ActionUnitTest extends CarlosUnitTestBase {
 
     @Test
     void deniedStoredPatientCannotWriteReviewerMetadataContentOrAuditUsingForgedFunctionId() {
-        CtlDocument link = new CtlDocument(); link.setId(new CtlDocumentPK("demographic", 987, 123));
+        CtlDocument link = new CtlDocument();
+        link.setId(new CtlDocumentPK("demographic", 987, 123));
         when(mockCtlDocumentDao.findByDocumentNoAndModule(123, "demographic")).thenReturn(List.of(link));
         DocumentExtraReviewerDao reviewers = mock(DocumentExtraReviewerDao.class);
         registerMock(DocumentExtraReviewerDao.class, reviewers);
-        action.setMode("123"); action.setFunction("demographic"); action.setFunctionId("123");
-        action.setReviewDoc(true); action.setExtraReviewDoc(true); action.setExtraReviewerId("999998");
+        action.setMode("123");
+        action.setFunction("demographic");
+        action.setFunctionId("123");
+        action.setReviewDoc(true);
+        action.setExtraReviewDoc(true);
+        action.setExtraReviewerId("999998");
         try (MockedStatic<EDocUtil> documents = mockStatic(EDocUtil.class)) {
             assertThatThrownBy(action::execute2).isInstanceOf(SecurityException.class);
-            documents.verifyNoInteractions(); logActionMock.verifyNoInteractions();
+            documents.verifyNoInteractions();
+            logActionMock.verifyNoInteractions();
             org.mockito.Mockito.verifyNoInteractions(reviewers);
             assertThat(request.getAttribute("docerrors")).isNull();
         }
@@ -244,7 +250,9 @@ class AddEditDocument2ActionUnitTest extends CarlosUnitTestBase {
     @Test
     void exactUnicodeDescriptionReachesMetadataEditUnchanged() {
         String description = "\uD83D\uDE00".repeat(255);
-        action.setMode("123"); action.setFunction("provider"); action.setFunctionId("999998");
+        action.setMode("123");
+        action.setFunction("provider");
+        action.setFunctionId("999998");
         action.setDocDesc(description);
         action.setDocType("Consultant Report");
         action.setAppointmentNo("0");
@@ -257,30 +265,39 @@ class AddEditDocument2ActionUnitTest extends CarlosUnitTestBase {
 
     @Test
     void inaccessibleNewPatientIsDeniedBeforeUploadValidationOrClinicalWrites() {
-        action.setMode("add"); action.setFunction("demographic"); action.setFunctionId("987");
+        action.setMode("add");
+        action.setFunction("demographic");
+        action.setFunctionId("987");
         try (MockedStatic<EDocUtil> documents = mockStatic(EDocUtil.class)) {
             assertThatThrownBy(action::execute2).isInstanceOf(SecurityException.class);
-            documents.verifyNoInteractions(); logActionMock.verifyNoInteractions();
+            documents.verifyNoInteractions();
+            logActionMock.verifyNoInteractions();
             assertThat(request.getAttribute("docerrors")).isNull();
         }
     }
 
     @Test
     void mixedCaseAndWhitespaceDemographicTargetCannotBypassPatientAuthorization() {
-        action.setMode("add"); action.setFunction(" DeMoGrApHiC "); action.setFunctionId("987");
+        action.setMode("add");
+        action.setFunction(" DeMoGrApHiC ");
+        action.setFunctionId("987");
         assertThatThrownBy(action::execute2).isInstanceOf(SecurityException.class);
         org.mockito.Mockito.verify(mockSecurityInfoManager).isAllowedAccessToPatientRecord(mockLoggedInInfo, 987);
     }
 
     @Test
     void collationLookalikeModuleCannotBypassPatientAuthorization() {
-        action.setMode("add"); action.setFunction("demograph\u0131c"); action.setFunctionId("987");
+        action.setMode("add");
+        action.setFunction("demograph\u0131c");
+        action.setFunctionId("987");
         assertThatThrownBy(action::execute2).isInstanceOf(SecurityException.class).hasMessageContaining("module");
     }
 
     @Test
     void accessiblePatientWithoutDocumentWritePrivilegeCannotUpload() {
-        action.setMode("add"); action.setFunction("demographic"); action.setFunctionId("123");
+        action.setMode("add");
+        action.setFunction("demographic");
+        action.setFunctionId("123");
         when(mockSecurityInfoManager.hasPrivilege(mockLoggedInInfo, "_edoc", "w", "123")).thenReturn(false);
         assertThatThrownBy(action::execute2).isInstanceOf(SecurityException.class);
     }
@@ -292,7 +309,9 @@ class AddEditDocument2ActionUnitTest extends CarlosUnitTestBase {
         action.setMode("123");
         action.setFunction("provider");
         action.setFunctionId("999998");
-        action.setDocDesc("Owned metadata edit"); action.setDocType("Consultant Report"); action.setAppointmentNo("0");
+        action.setDocDesc("Owned metadata edit");
+        action.setDocType("Consultant Report");
+        action.setAppointmentNo("0");
         try (MockedStatic<EDocUtil> documents = mockStatic(EDocUtil.class)) {
             assertThat(action.execute2()).isEqualTo("successEdit");
             documents.verify(() -> EDocUtil.editDocumentSQL(any(EDoc.class), eq(false)));
